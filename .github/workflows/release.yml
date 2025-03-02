@@ -1,0 +1,29 @@
+name: Build and Publish
+
+on:
+  push:
+    tags:
+      - "*.*.*"  # Triggers on version tags like 1.0.0
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for Git tags and changelog
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'  # Adjust to your Go version
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser  # Use the open-source version
+          version: '~> v2'          # Use the latest v2.x release
+          args: release --clean     # Run the release command
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
