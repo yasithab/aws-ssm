@@ -1,51 +1,62 @@
 version: 2
 
-# Project metadata
 project_name: aws-ssm
-
-# Global environment variables
-env:
-  - CGO_ENABLED=0
 
 before:
   hooks:
-    - go mod tidy        # Ensure dependencies are clean
-    - go mod download    # Fetch dependencies
+    - go mod tidy
+    - go mod download
 
 builds:
-  - id: aws-ssm
-    main: .
-    binary: aws-ssm
-    env:
+  - env:
       - CGO_ENABLED=0
     goos:
       - linux
-      - darwin
       - windows
+      - darwin
     goarch:
       - amd64
       - arm64
     ignore:
       - goos: windows
         goarch: arm64
-    ldflags:
-      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.CommitDate}}
     hooks:
       post:
         - sh -c 'if [ "{{ .Os }}" != "darwin" ]; then upx --best {{ .Path }}; fi'
 
 archives:
-  - id: macos
-    formats: [ 'tar.gz' ]
+  - formats: [ 'tar.gz' ]
     name_template: >-
-      {{ .ProjectName }}_v{{ .Version }}_{{ if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [ 'zip' ]
 
-  - id: windows
-    formats: [ 'zip' ]
-    name_template: >-
-      {{ .ProjectName }}_v{{ .Version }}_{{ if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
-    builds:
-      - aws-ssm
+brews:
+  - repository:
+      owner: yasithab
+      name: aws-ssm
+      token: "{{ .Env.HOMEBREW_GITHUB_API_TOKEN }}"
+    directory: Formula
+    commit_author:
+      name: "Yasitha Bogamuwa"
+      email: info@yasitha.dev
+    homepage: https://github.com/yasithab/aws-ssm
+    description: "AWS SSM Utility"
+    skip_upload: false
+    test: |
+      system "#{bin}/aws-ssm --version"
+    install: |
+      bin.install "aws-ssm"
+
+# brews:
+# - name: aws-ssm
+#   homepage: https://github.com/yasithab/aws-ssm
 
 release:
   github:
@@ -55,5 +66,5 @@ release:
   prerelease: auto
 
 checksum:
-  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
+  name_template: "{{ .ProjectName }}_checksums.txt"
   algorithm: sha256
