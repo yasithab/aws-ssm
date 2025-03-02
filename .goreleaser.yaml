@@ -20,6 +20,8 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
     hooks:
       post:
         - sh -c 'if [ "{{ .Os }}" != "darwin" ]; then upx --best {{ .Path }}; fi'
