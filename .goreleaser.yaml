@@ -1,0 +1,59 @@
+version: 2
+
+# Project metadata
+project_name: aws-ssm
+
+# Global environment variables
+env:
+  - CGO_ENABLED=0
+
+before:
+  hooks:
+    - go mod tidy        # Ensure dependencies are clean
+    - go mod download    # Fetch dependencies
+
+builds:
+  - id: aws-ssm
+    main: .
+    binary: aws-ssm
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.CommitDate}}
+    hooks:
+      post:
+        - sh -c 'if [ "{{ .Os }}" != "darwin" ]; then upx --best {{ .Path }}; fi'
+
+archives:
+  - id: macos
+    formats: [ 'tar.gz' ]
+    name_template: >-
+      {{ .ProjectName }}_v{{ .Version }}_{{ if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
+
+  - id: windows
+    formats: [ 'zip' ]
+    name_template: >-
+      {{ .ProjectName }}_v{{ .Version }}_{{ if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
+    builds:
+      - aws-ssm
+
+release:
+  github:
+    owner: yasithab
+    name: aws-ssm
+  draft: false
+  prerelease: auto
+
+checksum:
+  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
+  algorithm: sha256
