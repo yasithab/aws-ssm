@@ -40,9 +40,8 @@ archives:
 brews:
   - repository:
       owner: yasithab
-      name: aws-ssm
+      name: homebrew-aws-ssm
       token: "{{ .Env.HOMEBREW_GITHUB_API_TOKEN }}"
-    directory: Formula
     commit_author:
       name: "Yasitha Bogamuwa"
       email: info@yasitha.dev
@@ -53,10 +52,6 @@ brews:
       system "#{bin}/aws-ssm --version"
     install: |
       bin.install "aws-ssm"
-
-# brews:
-# - name: aws-ssm
-#   homepage: https://github.com/yasithab/aws-ssm
 
 release:
   github:
